@@ -2,11 +2,15 @@ package main
 
 import (
 	"crypto/tls"
+	"fmt"
 	"log"
 	"net/http"
 
 	"golang.org/x/crypto/acme/autocert"
 )
+
+// This is in our opinion the best config for a server to be compatible, modern and secure at the same time
+// scoring A+ in SSL Labs, IPv6 and HTTP2 with very quick response (have a nice time !!!)
 
 func main() {
 	mux := http.NewServeMux()
@@ -32,6 +36,14 @@ func main() {
 
 // web server for root
 func root(w http.ResponseWriter, req *http.Request) {
+	var out string
+
 	w.Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
-	w.Write([]byte("This is an example server.\n"))
+
+	out = fmt.Sprintf("Host: %s\n", req.Host)
+	for k, v := range req.Header {
+		out += fmt.Sprintf("%s : %s\n", k, v[0])
+	}
+
+	w.Write([]byte(out))
 }
