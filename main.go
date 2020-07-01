@@ -15,8 +15,9 @@ import (
 // scoring A+ in SSL Labs, IPv6 and HTTP2 with very quick response (have a nice time !!!)
 
 const (
-	globalroot = "/var/www/html"
-	firstpage  = "index"
+	globalroot   = "/var/www/html"
+	firstpage    = "index"
+	notfoundfile = "404.html" // inside its own domain's folder
 )
 
 func main() {
@@ -58,15 +59,14 @@ func root(w http.ResponseWriter, req *http.Request) {
 	fileinfo, err := os.Stat(namefile)
 	if err != nil {
 		// file does not exist
-		http.NotFound(w, req)
-		return
+		namefile = fmt.Sprintf("%s/%s", rootdir, notfoundfile)
 	} else if fileinfo.IsDir() {
 		// it is a folder, get in and access the index page
 		namefile = namefile + "/" + firstpage + ".html"
 		_, err := os.Stat(namefile)
 		if err != nil {
-			http.NotFound(w, req)
-			return
+			// no index file inside this folder
+			namefile = fmt.Sprintf("%s/%s", rootdir, notfoundfile)
 		}
 	}
 	fr, err := os.Open(namefile)
