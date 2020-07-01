@@ -5,12 +5,19 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"strings"
 
 	"golang.org/x/crypto/acme/autocert"
 )
 
 // This is in our opinion the best config for a server to be compatible, modern and secure at the same time
 // scoring A+ in SSL Labs, IPv6 and HTTP2 with very quick response (have a nice time !!!)
+
+const (
+	globalroot = "/var/www/html"
+	firstpage  = "index"
+)
 
 func main() {
 	mux := http.NewServeMux()
@@ -44,6 +51,30 @@ func root(w http.ResponseWriter, req *http.Request) {
 	for k, v := range req.Header {
 		out += fmt.Sprintf("%s : %s\n", k, v[0])
 	}
+	fmt.Printf(out)
 
-	w.Write([]byte(out))
+	rootdir := fmt.Sprintf("%s/%s/", globalroot, req.Host) // "/var/www/html/domain.com/"
+	namefile := strings.TrimRight(rootdir+req.URL.Path[1:], "/")
+	fileinfo, err := os.Stat(namefile)
+	if err != nil {
+		// file does not exist
+		http.NotFound(w, req)
+		return
+	} else if fileinfo.IsDir() {
+		// it is a folder, get in and access the index page
+		namefile = namefile + "/" + firstpage + ".html"
+		_, err := os.Stat(namefile)
+		if err != nil {
+			http.NotFound(w, req)
+			return
+		}
+	}
+	fr, err := os.Open(namefile)
+	if err != nil {
+		http.Error(w, "Internal Server Error", 500)
+		return
+	}
+	defer fr.Close()
+
+	http.ServeContent(w, req, namefile, fileinfo.ModTime(), fr)
 }
