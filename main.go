@@ -45,6 +45,7 @@ func main() {
 // web server for root
 func root(w http.ResponseWriter, req *http.Request) {
 	var out string
+	var notfound bool
 
 	w.Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
 
@@ -59,14 +60,24 @@ func root(w http.ResponseWriter, req *http.Request) {
 	fileinfo, err := os.Stat(namefile)
 	if err != nil {
 		// file does not exist
-		namefile = fmt.Sprintf("%s/%s", rootdir, notfoundfile)
+		namefile = fmt.Sprintf("%s%s", rootdir, notfoundfile)
+		notfound = true
 	} else if fileinfo.IsDir() {
 		// it is a folder, get in and access the index page
 		namefile = namefile + "/" + firstpage + ".html"
 		_, err := os.Stat(namefile)
 		if err != nil {
 			// no index file inside this folder
-			namefile = fmt.Sprintf("%s/%s", rootdir, notfoundfile)
+			namefile = fmt.Sprintf("%s%s", rootdir, notfoundfile)
+			notfound = true
+		}
+	}
+	fmt.Println("File:", namefile)
+	if notfound {
+		fileinfo, err = os.Stat(namefile)
+		if err != nil {
+			http.Error(w, "Internal Server Error", 500)
+			return
 		}
 	}
 	fr, err := os.Open(namefile)
