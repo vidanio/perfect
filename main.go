@@ -22,6 +22,7 @@ func main() {
 		Handler: mux,
 		TLSConfig: &tls.Config{
 			GetCertificate: certManager.GetCertificate,
+			MinVersion:     tls.VersionTLS12,
 		},
 	}
 
@@ -31,5 +32,6 @@ func main() {
 
 // web server for root
 func root(w http.ResponseWriter, req *http.Request) {
+	w.Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
 	w.Write([]byte("This is an example server.\n"))
 }
