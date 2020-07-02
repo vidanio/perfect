@@ -43,6 +43,7 @@ func main() {
 		if err != nil {
 			log.Println("ffmpeg failed:", err)
 		}
+	}
 
 	fmt.Println("Program exited !!!")
 }
