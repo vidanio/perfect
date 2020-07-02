@@ -40,9 +40,9 @@ func main() {
 	select {
 	case <-timer.C: // timeout in seconds
 		log.Println("Timeout hit...")
-		cmd.Process.Kill()
+		cmd.Process.Signal(os.Interrupt) // SIGINT (-2)
+		//cmd.Process.Signal(os.Kill)      // SIGKILL (-9)
 		<-done // drain the channel
-		return
 	case err := <-done:
 		if err != nil {
 			log.Println("ffmpeg failed:", err)
