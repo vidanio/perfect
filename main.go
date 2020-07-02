@@ -38,7 +38,7 @@ func main() {
 		},
 	}
 
-	go http.ListenAndServe(":80", certManager.HTTPHandler(nil))
+	go log.Fatal(http.ListenAndServe(":80", certManager.HTTPHandler(nil)))
 	log.Fatal(server.ListenAndServeTLS("", ""))
 }
 
