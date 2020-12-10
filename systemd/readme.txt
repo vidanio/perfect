@@ -8,14 +8,12 @@ After=network-online.target
 Wants=network-online.target
 
 [Service]
-ExecStart=/usr/local/bin/perfect
+ExecStart=/usr/local/bin/autoserver onpremisesrt.com srtserver.com srtliveserver.com srtgateway.com
 Restart=always
-LimitMEMLOCK=infinity
-TimeoutStopSec=5s
 
 [Install]
 WantedBy=multi-user.target
-Alias=perfect-server.service
+Alias=perfectsrv.service
 
 systemctl enable perfectsrv.service
 systemctl start perfectsrv.service

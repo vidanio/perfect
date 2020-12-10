@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -21,7 +22,29 @@ const (
 	globalroot   = "/var/www/html"
 	firstpage    = "index"
 	notfoundfile = "404.html" // inside its own domain's folder
+	logFile      = "/var/log/perfect/access.log"
 )
+
+// Logger : defines all the loggin system
+type Logger struct {
+	LogFile string      // log file to write
+	InfoLog *log.Logger // info msg logger
+}
+
+var (
+	logger *Logger
+)
+
+func init() {
+	// starting the global logger system first of all
+	logger = &Logger{}
+	logger.LogFile = logFile
+	file, err := os.OpenFile(logger.LogFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatalln("Unable to open the error logging file:", err)
+	}
+	logger.InfoLog = log.New(io.MultiWriter(file, os.Stderr), "INFO:", log.Ldate|log.Ltime)
+}
 
 func main() {
 	// setup a simple handler which sends a HTHS header for six months (!)
@@ -84,17 +107,34 @@ func cacheDir() (dir string) {
 
 // web server for root
 func root(w http.ResponseWriter, req *http.Request) {
-	var out string
-	var notfound bool
+	var notfound, zipdown bool
 
 	w.Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
 
-	out = fmt.Sprintf("Host: %s\n", req.Host)
-	for k, v := range req.Header {
-		out += fmt.Sprintf("%s : %s\n", k, v[0])
-	}
-	fmt.Printf(out)
+	// out := fmt.Sprintf("Host: %s\n", req.Host)
+	// for k, v := range req.Header {
+	// 	out += fmt.Sprintf("%s : %s\n", k, v[0])
+	// }
+	// fmt.Printf(out)
 
+	userAgent := strings.ToLower(req.Header.Get("User-Agent"))
+	// logger.InfoLog.Printf("IP: [%s] Bot: [%s]\n", req.RemoteAddr, userAgent)
+	if !strings.Contains(userAgent, "google") && !strings.Contains(userAgent, "bot") {
+		if strings.HasSuffix(req.URL.Path, ".zip") { // download zip files from here, its quicker
+			zipdown = true
+		} else { // redirect to our website
+			http.Redirect(w, req, "https://www.todostreaming.eu/", http.StatusMovedPermanently)
+			return
+		}
+	}
+
+	if zipdown { // log the download
+		logger.InfoLog.Printf("IP: [%s] File: [%s]\n", req.RemoteAddr, req.URL.Path)
+	} else { // log the bot
+		logger.InfoLog.Printf("IP: [%s] Bot: [%s]\n", req.RemoteAddr, userAgent)
+	}
+
+	// this part is only to serve Bots
 	rootdir := fmt.Sprintf("%s/%s/", globalroot, req.Host) // "/var/www/html/domain.com/"
 	namefile := strings.TrimRight(rootdir+req.URL.Path[1:], "/")
 	fileinfo, err := os.Stat(namefile)
@@ -112,7 +152,7 @@ func root(w http.ResponseWriter, req *http.Request) {
 			notfound = true
 		}
 	}
-	fmt.Println("File:", namefile)
+	// fmt.Println("File:", namefile)
 	if notfound {
 		fileinfo, err = os.Stat(namefile)
 		if err != nil {
