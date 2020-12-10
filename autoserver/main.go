@@ -131,7 +131,7 @@ func root(w http.ResponseWriter, req *http.Request) {
 	if zipdown { // log the download
 		logger.InfoLog.Printf("IP: [%s] File: [%s]\n", req.RemoteAddr, req.URL.Path)
 	} else { // log the bot
-		logger.InfoLog.Printf("IP: [%s] Bot: [%s]\n", req.RemoteAddr, userAgent)
+		logger.InfoLog.Printf("IP: [%s] Host: [%s] Bot: [%s]\n", req.RemoteAddr, req.Host, userAgent)
 	}
 
 	// this part is only to serve Bots
