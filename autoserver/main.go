@@ -34,6 +34,11 @@ func main() {
 		log.Fatalf("fatal; specify domains as arguments")
 	}
 
+	fmt.Printf("Serving HTTPS on domains:\n")
+	for k, domain := range domains {
+		fmt.Printf("[%d]\t%s\n", k, domain)
+	}
+
 	// create the autocert.Manager with domains and path to the cache
 	certManager := autocert.Manager{
 		Prompt:     autocert.AcceptTOS,
@@ -55,7 +60,7 @@ func main() {
 		},
 	}
 
-	log.Printf("Serving http/https for domains: %+v", domains)
+	// log.Printf("Serving http/https for domains: %+v", domains)
 	go func() {
 		// serve HTTP, which will redirect automatically to HTTPS
 		h := certManager.HTTPHandler(nil)
