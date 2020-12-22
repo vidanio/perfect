@@ -107,7 +107,7 @@ func cacheDir() (dir string) {
 
 // web server for root
 func root(w http.ResponseWriter, req *http.Request) {
-	var notfound, zipdown bool
+	var notfound bool
 
 	w.Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
 
@@ -118,19 +118,10 @@ func root(w http.ResponseWriter, req *http.Request) {
 	// fmt.Printf(out)
 
 	userAgent := strings.ToLower(req.Header.Get("User-Agent"))
-	// logger.InfoLog.Printf("IP: [%s] Bot: [%s]\n", req.RemoteAddr, userAgent)
-	if !strings.Contains(userAgent, "google") && !strings.Contains(userAgent, "bot") {
-		if strings.HasSuffix(req.URL.Path, ".zip") { // download zip files from here, its quicker
-			zipdown = true
-		} else { // redirect to our website
-			http.Redirect(w, req, "https://www.todostreaming.eu/", http.StatusMovedPermanently)
-			return
-		}
-	}
 
-	if zipdown { // log the download
+	if strings.HasSuffix(req.URL.Path, ".zip") { // log the download
 		logger.InfoLog.Printf("IP: [%s] File: [%s]\n", req.RemoteAddr, req.URL.Path)
-	} else { // log the bot
+	} else if strings.Contains(userAgent, "google") { // log the bot
 		logger.InfoLog.Printf("IP: [%s] Host: [%s] Bot: [%s]\n", req.RemoteAddr, req.Host, userAgent)
 	}
 
